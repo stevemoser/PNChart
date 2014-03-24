@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "PNChart"
-  s.version      = "0.2.2"
+  s.version      = "0.3.3"
   s.summary      = "A simple and beautiful chart lib with animation used in Piner for iOS"
 
   s.homepage     = "https://github.com/kevinzhow/PNChart"
@@ -15,8 +15,8 @@ Pod::Spec.new do |s|
 
   s.ios.dependency 'UICountingLabel', '~> 1.0.0'
 
-  s.source_files = 'PNChartDemo/PNChart/**/*.{h,m}'
-  s.public_header_files = 'PNChartDemo/PNChart/**/*.h'
+  s.source_files = 'PNChart/**/*.{h,m}'
+  s.public_header_files = 'PNChart/**/*.h'
   s.frameworks   = 'CoreGraphics', 'UIKit', 'Foundation', 'QuartzCore'
   s.requires_arc = true
 end
