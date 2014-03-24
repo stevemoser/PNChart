@@ -61,14 +61,26 @@
     
     NSInteger index = 0;
 	NSInteger num = _yLabelNum+1;
-	while (num > 0) {
-		PNChartLabel * label = [[PNChartLabel alloc] initWithFrame:CGRectMake(0.0, (_chartCavanHeight - index * yStepHeight), _chartMargin, _yLabelHeight)];
-		[label setTextAlignment:NSTextAlignmentRight];
-		label.text = [NSString stringWithFormat:@"%1.f",_yValueMin + (yStep * index)];
-		[self addSubview:label];
-        index +=1 ;
-		num -= 1;
-	}
+    //	while (num > 0) {
+    //
+    //		PNChartLabel * label = [[PNChartLabel alloc] initWithFrame:CGRectMake(0.0, (_chartCavanHeight - index * yStepHeight), _chartMargin, _yLabelHeight)];
+    //		[label setTextAlignment:NSTextAlignmentRight];
+    //		label.text = [NSString stringWithFormat:@"%1.fMB",_yValueMin + (yStep * index)];
+    //		[self addSubview:label];
+    //        index +=1 ;
+    //		num -= 1;
+    //	}
+    
+    PNChartLabel * label = [[PNChartLabel alloc] initWithFrame:CGRectMake(0.0, (_chartCavanHeight), _chartMargin, _yLabelHeight)];
+    [label setTextAlignment:NSTextAlignmentRight];
+    label.text = [NSString stringWithFormat:@"%1.fMB",_yValueMin];
+    [self addSubview:label];
+    
+    PNChartLabel * labelTwo = [[PNChartLabel alloc] initWithFrame:CGRectMake(0.0, (_chartCavanHeight - (_yLabelNum) * yStepHeight), _chartMargin, _yLabelHeight)];
+    [labelTwo setTextAlignment:NSTextAlignmentRight];
+    labelTwo.text = [NSString stringWithFormat:@"%1.fMB",_yValueMin + (yStep * (_yLabelNum))];
+    [self addSubview:labelTwo];
+    
     
 }
 
@@ -97,13 +109,11 @@
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     [self touchPoint:touches withEvent:event];
-    [self touchKeyPoint:touches withEvent:event];
 }
 
 -(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
     [self touchPoint:touches withEvent:event];
-    [self touchKeyPoint:touches withEvent:event];
 }
 
 -(void)touchPoint:(NSSet *)touches withEvent:(UIEvent *)event
@@ -111,59 +121,26 @@
     //Get the point user touched
     UITouch *touch = [touches anyObject];
     CGPoint touchPoint = [touch locationInView:self];
-    
-    for (int p = _pathPoints.count - 1; p >= 0; p--) {
-        NSArray *linePointsArray = _pathPoints[p];
-        
-        for (int i = 0; i < linePointsArray.count - 1; i += 1) {
-            CGPoint p1 = [linePointsArray[i] CGPointValue];
-            CGPoint p2 = [linePointsArray[i+1] CGPointValue];
-            
-            // Closest distance from point to line
-            float distance = fabsf(((p2.x - p1.x)*(touchPoint.y - p1.y))-((p1.x-touchPoint.x)*(p1.y-p2.y)));
-            distance /= hypot(p2.x-p1.x, p1.y-p2.y);
-            
-            if (distance <= 5.0) {
-                // Conform to delegate parameters, figure out what bezier path this CGPoint belongs to.
-                for (UIBezierPath *path in _chartPath) {
-                    BOOL pointContainsPath = CGPathContainsPoint(path.CGPath, NULL, p1, NO);
-                    
-                    if (pointContainsPath) {
-                        [_delegate userClickedOnLinePoint:touchPoint lineIndex:[_chartPath indexOfObject:path]];
-                        return;
+    for (UIBezierPath *path in _chartPath) {
+        CGPathRef originalPath = path.CGPath;
+        CGPathRef strokedPath = CGPathCreateCopyByStrokingPath(originalPath, NULL, 3.0, kCGLineCapRound, kCGLineJoinRound, 3.0);
+        BOOL pathContainsPoint = CGPathContainsPoint(strokedPath, NULL, touchPoint, NO);
+        if (pathContainsPoint)
+        {
+            [_delegate userClickedOnLinePoint:touchPoint lineIndex:[_chartPath indexOfObject:path]];
+            for (NSArray *linePointsArray in _pathPoints) {
+                for (NSValue *val in linePointsArray) {
+                    CGPoint p = [val CGPointValue];
+                    if (p.x + 3.0 > touchPoint.x && p.x - 3.0 < touchPoint.x && p.y + 3.0 > touchPoint.y && p.y - 3.0 < touchPoint.y ) {
+                        //Call the delegate and pass the point and index of the point
+                        [_delegate userClickedOnLineKeyPoint:touchPoint lineIndex:[_pathPoints indexOfObject:linePointsArray] andPointIndex:[linePointsArray indexOfObject:val]];
                     }
                 }
             }
+            
         }
     }
-}
-
--(void)touchKeyPoint:(NSSet *)touches withEvent:(UIEvent *)event
-{
-    //Get the point user touched
-    UITouch *touch = [touches anyObject];
-    CGPoint touchPoint = [touch locationInView:self];
     
-    for (int p = _pathPoints.count - 1; p >= 0; p--) {
-        NSArray *linePointsArray = _pathPoints[p];
-        
-        for (int i = 0; i < linePointsArray.count - 1; i += 1) {
-            CGPoint p1 = [linePointsArray[i] CGPointValue];
-            CGPoint p2 = [linePointsArray[i+1] CGPointValue];
-            
-            float distanceToP1 = fabsf(hypot(touchPoint.x - p1.x, touchPoint.y - p1.y));
-            float distanceToP2 = hypot(touchPoint.x - p2.x, touchPoint.y - p2.y);
-            
-            float distance = MIN(distanceToP1, distanceToP2);
-            
-            if (distance <= 10.0) {
-                [_delegate userClickedOnLineKeyPoint:touchPoint
-                                           lineIndex:p
-                                       andPointIndex:(distance == distanceToP2 ? i+1 : i)];
-                return;
-            }
-        }
-    }
 }
 
 -(void)strokeChart
@@ -181,7 +158,7 @@
         UIBezierPath * progressline = [UIBezierPath bezierPath];
         [_chartPath addObject:progressline];
         
-
+        
         
         if(!_showLabel){
             _chartCavanHeight = self.frame.size.height - 2*_yLabelHeight;
@@ -199,7 +176,7 @@
         
         
         for (NSUInteger i = 0; i < chartData.itemCount; i++) {
-
+            
             yValue = chartData.getData(i).y;
             
             innerGrade = (yValue - _yValueMin) / ( _yValueMax - _yValueMin);
@@ -307,7 +284,7 @@
     _yLabelHeight = [[[[PNChartLabel alloc] init] font] pointSize];
     
     _chartMargin = 30;
-
+    
     _chartCavanWidth = self.frame.size.width - _chartMargin *2;
     _chartCavanHeight = self.frame.size.height - _chartMargin * 2;
 }
