@@ -23,6 +23,9 @@
 @property (nonatomic, strong) NSNumber * current;
 @property (nonatomic, strong) NSNumber * lineWidth;
 @property (nonatomic) BOOL clockwise;
+@property (nonatomic) CGFloat startAngle;
+@property (nonatomic) CGFloat endAngle;
+@property (nonatomic) BOOL showLabel;
 
 @property(nonatomic,strong) CAShapeLayer * circle;
 @property(nonatomic,strong) CAShapeLayer * circleBG;

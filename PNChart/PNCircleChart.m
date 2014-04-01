@@ -25,42 +25,34 @@
     return _labelColor;
 }
 
+- (id)initWithCoder:(NSCoder *)coder {
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self setDefaultValues];
+    }
+    return self;
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self setDefaultValues];
+    }
+    return self;
+}
 
 - (id)initWithFrame:(CGRect)frame andTotal:(NSNumber *)total andCurrent:(NSNumber *)current andClockwise:(BOOL)clockwise {
     self = [super initWithFrame:frame];
     
     if (self) {
+        [self setDefaultValues];
+
         _total = total;
         _current = current;
-        _strokeColor = PNFreshGreen;
 		_clockwise = clockwise;
-		
-		CGFloat startAngle = clockwise ? -90.0f : 270.0f;
-		CGFloat endAngle = clockwise ? -90.01f : 270.01f;
-        
-        _lineWidth = [NSNumber numberWithFloat:8.0];
-        UIBezierPath* circlePath = [UIBezierPath bezierPathWithArcCenter:CGPointMake(self.center.x,self.center.y) radius:self.frame.size.height*0.5 startAngle:DEGREES_TO_RADIANS(startAngle) endAngle:DEGREES_TO_RADIANS(endAngle) clockwise:clockwise];
-        
-        _circle               = [CAShapeLayer layer];
-        _circle.path          = circlePath.CGPath;
-        _circle.lineCap       = kCALineCapRound;
-        _circle.fillColor     = [UIColor clearColor].CGColor;
-        _circle.lineWidth     = [_lineWidth floatValue];
-        _circle.zPosition     = 1;
 
-        _circleBG             = [CAShapeLayer layer];
-        _circleBG.path        = circlePath.CGPath;
-        _circleBG.lineCap     = kCALineCapRound;
-        _circleBG.fillColor   = [UIColor clearColor].CGColor;
-        _circleBG.lineWidth   = [_lineWidth floatValue];
-        _circleBG.strokeColor = PNLightYellow.CGColor;
-        _circleBG.strokeEnd   = 1.0;
-        _circleBG.zPosition   = -1;
-        
-        [self.layer addSublayer:_circle];
-        [self.layer addSublayer:_circleBG];
-
-		_gradeLabel = [[UICountingLabel alloc] initWithFrame:CGRectMake(0, 0, 50.0, 50.0)];
+        _startAngle = _clockwise ? -90.0f : 270.0f;
+        _endAngle = _clockwise ? -90.01f : 270.01f;
         
     }
     
@@ -70,17 +62,43 @@
 
 -(void)strokeChart
 {
-    //Add count label
     
-    [_gradeLabel setTextAlignment:NSTextAlignmentCenter];
-    [_gradeLabel setFont:[UIFont boldSystemFontOfSize:13.0f]];
-    [_gradeLabel setTextColor:self.labelColor];
-    [_gradeLabel setCenter:CGPointMake(self.center.x,self.center.y)];
-    _gradeLabel.method = UILabelCountingMethodEaseInOut;
-    _gradeLabel.format = @"%d%%";
-   
+    _lineWidth = [NSNumber numberWithFloat:8.0];
+    UIBezierPath* circlePath = [UIBezierPath bezierPathWithArcCenter:CGPointMake(self.center.x,self.center.y) radius:self.frame.size.height*0.5 startAngle:DEGREES_TO_RADIANS(_startAngle) endAngle:DEGREES_TO_RADIANS(_endAngle) clockwise:_clockwise];
     
-    [self addSubview:_gradeLabel];
+    _circle               = [CAShapeLayer layer];
+    _circle.path          = circlePath.CGPath;
+    _circle.lineCap       = kCALineCapRound;
+    _circle.fillColor     = [UIColor clearColor].CGColor;
+    _circle.lineWidth     = [_lineWidth floatValue];
+    _circle.zPosition     = 1;
+    
+    _circleBG             = [CAShapeLayer layer];
+    _circleBG.path        = circlePath.CGPath;
+    _circleBG.lineCap     = kCALineCapRound;
+    _circleBG.fillColor   = [UIColor clearColor].CGColor;
+    _circleBG.lineWidth   = [_lineWidth floatValue];
+    _circleBG.strokeColor = PNLightYellow.CGColor;
+    _circleBG.strokeEnd   = 1.0;
+    _circleBG.zPosition   = -1;
+    
+    [self.layer addSublayer:_circle];
+    [self.layer addSublayer:_circleBG];
+    
+    if (_showLabel) {
+        //Add count label
+        _gradeLabel = [[UICountingLabel alloc] initWithFrame:CGRectMake(0, 0, 50.0, 50.0)];
+        
+        [_gradeLabel setTextAlignment:NSTextAlignmentCenter];
+        [_gradeLabel setFont:[UIFont boldSystemFontOfSize:13.0f]];
+        [_gradeLabel setTextColor:self.labelColor];
+        [_gradeLabel setCenter:CGPointMake(self.center.x,self.center.y)];
+        _gradeLabel.method = UILabelCountingMethodEaseInOut;
+        _gradeLabel.format = @"%d%%";
+        
+        
+        [self addSubview:_gradeLabel];
+    }
     
     //Add circle params
     
@@ -100,6 +118,21 @@
     
     [_gradeLabel countFrom:0 to:[_current floatValue]/[_total floatValue]*100 withDuration:1.0];
    
+}
+
+#pragma mark private methods
+
+- (void)setDefaultValues {
+    // Initialization code
+    _total = @100;
+    _current = @60;
+    _strokeColor = PNFreshGreen;
+    _clockwise = NO;
+    _startAngle = _clockwise ? -90.0f : 270.0f;
+    _endAngle = _clockwise ? -90.01f : 270.01f;
+    
+    _showLabel = YES;
+
 }
 
 @end
